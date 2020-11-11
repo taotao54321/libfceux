@@ -20,8 +20,8 @@ enum FceuxMemoryDomain {
     FCEUX_MEMORY_CPU,
 };
 
-uint8_t fceux_read(uint16_t addr, enum FceuxMemoryDomain domain);
-void fceux_write(uint16_t addr, uint8_t value, enum FceuxMemoryDomain domain);
+uint8_t fceux_mem_read(uint16_t addr, enum FceuxMemoryDomain domain);
+void fceux_mem_write(uint16_t addr, uint8_t value, enum FceuxMemoryDomain domain);
 
 struct Snapshot;
 
@@ -38,6 +38,9 @@ typedef void (*FceuxHookBeforeExec)(uint16_t addr);
 //
 // より複雑なフック機構はこの関数を用いてクライアント側で実装可能なはず。
 void fceux_hook_before_exec(FceuxHookBeforeExec hook);
+
+// xbuf の Byte に対応する RGB 値を得る。
+void fceux_palette_get(uint8_t idx, uint8_t* r, uint8_t* g, uint8_t* b);
 
 #ifdef __cplusplus
 }

@@ -54,7 +54,7 @@ LIBFCEUX void fceux_run_frame(
     FCEUI_Emulate(xbuf, soundbuf, soundbuf_size, 0);
 }
 
-LIBFCEUX std::uint8_t fceux_read(std::uint16_t addr, enum FceuxMemoryDomain domain) {
+LIBFCEUX std::uint8_t fceux_mem_read(std::uint16_t addr, enum FceuxMemoryDomain domain) {
     switch(domain) {
     case FCEUX_MEMORY_CPU:
         return GetMem(addr);
@@ -62,7 +62,7 @@ LIBFCEUX std::uint8_t fceux_read(std::uint16_t addr, enum FceuxMemoryDomain doma
     }
 }
 
-LIBFCEUX void fceux_write(std::uint16_t addr, std::uint8_t value, enum FceuxMemoryDomain domain) {
+LIBFCEUX void fceux_mem_write(std::uint16_t addr, std::uint8_t value, enum FceuxMemoryDomain domain) {
     switch(domain) {
     case FCEUX_MEMORY_CPU:
         BWrite[addr](addr, value);
@@ -93,4 +93,8 @@ LIBFCEUX int fceux_snapshot_save(struct Snapshot* snap) {
 
 LIBFCEUX void fceux_hook_before_exec(FceuxHookBeforeExec hook) {
     hook_before_exec = hook;
+}
+
+LIBFCEUX void fceux_palette_get(std::uint8_t idx, std::uint8_t* r, std::uint8_t* g, std::uint8_t* b) {
+    FCEUD_GetPalette(idx, r, g, b);
 }
