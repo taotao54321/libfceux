@@ -5,9 +5,12 @@
 #include "git.h"
 #include "file.h"
 
+#include <cstdint>
 #include <cstdio>
 #include <cstring>
 #include <iosfwd>
+
+void FCEUD_CallHookBeforeExec(std::uint16_t addr);
 
 FILE *FCEUD_UTF8fopen(const char *fn, const char *mode);
 inline FILE *FCEUD_UTF8fopen(const std::string &n, const char *mode) { return FCEUD_UTF8fopen(n.c_str(),mode); }

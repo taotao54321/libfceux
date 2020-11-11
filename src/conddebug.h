@@ -21,6 +21,8 @@
 #ifndef CONDDEBUG_H
 #define CONDDEBUG_H
 
+#include "types.h"
+
 #define TYPE_NO 0
 #define TYPE_REG 1
 #define TYPE_FLAG 2

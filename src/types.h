@@ -22,6 +22,17 @@
 #ifndef __FCEU_TYPES
 #define __FCEU_TYPES
 
+#include <stdint.h>
+
+typedef int8_t int8;
+typedef uint8_t uint8;
+typedef int16_t int16;
+typedef uint16_t uint16;
+typedef int32_t int32;
+typedef uint32_t uint32;
+typedef int64_t int64;
+typedef uint64_t uint64;
+
 //enables a hack designed for debugging dragon warrior 3 which treats BRK as a 3-byte opcode
 //#define BRK_3BYTE_HACK
 
@@ -36,12 +47,6 @@
 #endif
 
 #ifdef MSVC
-typedef unsigned char uint8;
-typedef unsigned short uint16;
-typedef unsigned int uint32;
-typedef signed char int8;
-typedef signed short int16;
-typedef signed int int32;
 #define dup _dup
 #define stat _stat
 #define mkdir _mkdir
@@ -65,27 +70,15 @@ typedef signed int int32;
 #include <sys/types.h>
 #include <sys/stat.h>
 #include <unistd.h>
-#include <inttypes.h>
-typedef int8_t int8;
-typedef int16_t int16;
-typedef int32_t int32;
-
-typedef uint8_t uint8;
-typedef uint16_t uint16;
-typedef uint32_t uint32;
 
 #define FCEUX_fstat fstat
 #endif
 
 #ifdef __GNUC__
- typedef unsigned long long uint64;
  typedef uint64 u64;
- typedef long long int64;
  #define INLINE inline
  #define GINLINE inline
 #elif MSVC
- typedef __int64 int64;
- typedef unsigned __int64 uint64;
  #define __restrict__
  #define INLINE __inline
  #define GINLINE			/* Can't declare a function INLINE

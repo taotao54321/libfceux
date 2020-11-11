@@ -1,4 +1,3 @@
-
 if ( ${GTK} )
 message( STATUS "GUI backend: GTK")
 set( APP_NAME fceux-gtk)
@@ -471,84 +470,98 @@ add_custom_command(
 
 set_property(SOURCE ${CMAKE_CURRENT_BINARY_DIR}/fceux_git_info.cpp PROPERTY SKIP_AUTOGEN ON)
 
-if (APPLE)
+#if (APPLE)
+#
+#set(MACOSX_BUNDLE_ICON_FILE fceux.icns)
+#set(APP_ICON  ${CMAKE_SOURCE_DIR}/fceux.icns )
+#set_source_files_properties( ${APP_ICON} PROPERTIES MACOSX_PACKAGE_LOCATION "Resources" )
+#
+#add_executable(  ${APP_NAME}  MACOSX_BUNDLE ${APP_ICON} ${SOURCES} ../resources.qrc 
+#	${CMAKE_CURRENT_BINARY_DIR}/fceux_git_info.cpp)
+#
+#else()
+#
+#   if ( ${GTK} )
+#      add_executable(  ${APP_NAME}  ${SOURCES} 
+#   	   ${CMAKE_CURRENT_BINARY_DIR}/fceux_git_info.cpp)
+#   else()
+#      add_executable(  ${APP_NAME}  ${SOURCES} ../resources.qrc 
+#   	   ${CMAKE_CURRENT_BINARY_DIR}/fceux_git_info.cpp)
+#   endif()
+#endif()
+#
+#if ( ${GTK} )
+#   target_link_libraries( ${APP_NAME}  
+#   ${GTK3_LDFLAGS} ${X11_LDFLAGS}
+#   ${OPENGL_LDFLAGS}
+# 	${SDL2_LDFLAGS}
+#	${MINIZIP_LDFLAGS} ${ZLIB_LIBRARIES}
+#	${LUA_LDFLAGS}
+# 	${SYS_LIBS}
+#)
+#else()
+#target_link_libraries( ${APP_NAME}  
+#   ${Qt5Widgets_LIBRARIES}
+#   ${Qt5OpenGL_LIBRARIES}
+#   ${OPENGL_LDFLAGS}
+# 	${SDL2_LDFLAGS}
+#	${MINIZIP_LDFLAGS} ${ZLIB_LIBRARIES}
+#	${LUA_LDFLAGS}
+# 	${SYS_LIBS}
+#)
+#endif()
+#
+#if (APPLE)
+#
+#install( TARGETS  ${APP_NAME}  
+#	BUNDLE  DESTINATION  . COMPONENT Runtime 
+#	RUNTIME  DESTINATION  bin COMPONENT Runtime )
+#
+## Use \$ to defer expansion until install script is called; CPack will call it with its own CMAKE_INSTALL_PREFIX
+#set(APP \${CMAKE_INSTALL_PREFIX}/${APP_NAME}.app)
+#
+#set(CPACK_PACKAGE_ICON ${CMAKE_SOURCE_DIR}/fceux.icns )
+#set(CPACK_GENERATOR "DRAGNDROP")
+#include(CPACK)
+#
+## macdeployqt tool that comes with Qt: https://doc.qt.io/qt-5/macos-deployment.html#macdeploy
+## Compared to fixup_bundle, correctly finds and installs Qt-specific resources as well as non-Qt dependencies
+#find_program(MACDEPLOYQT macdeployqt)
+#if(NOT MACDEPLOYQT)
+#	message(FATAL_ERROR "Could not find macdeployqt executable")
+#endif()
+#
+#install( CODE "
+#	message(STATUS \"Deploying and fixing up dependencies in app: ${APP}\")
+#	execute_process(COMMAND \"${MACDEPLOYQT}\" \"${APP}\" -verbose=1)
+#		"
+#	COMPONENT Runtime
+#	)
+#
+#else(APPLE)
+#
+#install( TARGETS  ${APP_NAME}  
+#	RUNTIME  DESTINATION  bin )
+#
+#install( FILES     ${CMAKE_CURRENT_SOURCE_DIR}/auxlib.lua                DESTINATION share/fceux/luaScripts  )
+#install( DIRECTORY ${CMAKE_SOURCE_DIR}/output/.                          DESTINATION share/fceux  )
+#install( FILES     ${CMAKE_SOURCE_DIR}/fceux1.png                        DESTINATION share/pixmaps  )
+#install( FILES     ${CMAKE_SOURCE_DIR}/fceux.desktop                     DESTINATION share/applications  )
+#install( FILES     ${CMAKE_SOURCE_DIR}/documentation/fceux.6             DESTINATION share/man/man6  )
+#install( FILES     ${CMAKE_SOURCE_DIR}/documentation/fceux-net-server.6  DESTINATION share/man/man6  )
+#
+#endif(APPLE)
 
-set(MACOSX_BUNDLE_ICON_FILE fceux.icns)
-set(APP_ICON  ${CMAKE_SOURCE_DIR}/fceux.icns )
-set_source_files_properties( ${APP_ICON} PROPERTIES MACOSX_PACKAGE_LOCATION "Resources" )
+#---------------------------------------------------------------------
 
-add_executable(  ${APP_NAME}  MACOSX_BUNDLE ${APP_ICON} ${SOURCES} ../resources.qrc 
-	${CMAKE_CURRENT_BINARY_DIR}/fceux_git_info.cpp)
+include_directories(${CMAKE_SOURCE_DIR}/include)
 
-else()
-
-   if ( ${GTK} )
-      add_executable(  ${APP_NAME}  ${SOURCES} 
-   	   ${CMAKE_CURRENT_BINARY_DIR}/fceux_git_info.cpp)
-   else()
-      add_executable(  ${APP_NAME}  ${SOURCES} ../resources.qrc 
-   	   ${CMAKE_CURRENT_BINARY_DIR}/fceux_git_info.cpp)
-   endif()
-endif()
-
-if ( ${GTK} )
-   target_link_libraries( ${APP_NAME}  
-   ${GTK3_LDFLAGS} ${X11_LDFLAGS}
-   ${OPENGL_LDFLAGS}
- 	${SDL2_LDFLAGS}
-	${MINIZIP_LDFLAGS} ${ZLIB_LIBRARIES}
-	${LUA_LDFLAGS}
- 	${SYS_LIBS}
+set(SOURCES_LIB
+  ${CMAKE_CURRENT_SOURCE_DIR}/lib.cpp
+  ${CMAKE_CURRENT_SOURCE_DIR}/lib-driver.cpp
+  ${SRC_CORE}
+  ${SRC_DRIVERS_COMMON}
 )
-else()
-target_link_libraries( ${APP_NAME}  
-   ${Qt5Widgets_LIBRARIES}
-   ${Qt5OpenGL_LIBRARIES}
-   ${OPENGL_LDFLAGS}
- 	${SDL2_LDFLAGS}
-	${MINIZIP_LDFLAGS} ${ZLIB_LIBRARIES}
-	${LUA_LDFLAGS}
- 	${SYS_LIBS}
-)
-endif()
 
-if (APPLE)
-
-install( TARGETS  ${APP_NAME}  
-	BUNDLE  DESTINATION  . COMPONENT Runtime 
-	RUNTIME  DESTINATION  bin COMPONENT Runtime )
-
-# Use \$ to defer expansion until install script is called; CPack will call it with its own CMAKE_INSTALL_PREFIX
-set(APP \${CMAKE_INSTALL_PREFIX}/${APP_NAME}.app)
-
-set(CPACK_PACKAGE_ICON ${CMAKE_SOURCE_DIR}/fceux.icns )
-set(CPACK_GENERATOR "DRAGNDROP")
-include(CPACK)
-
-# macdeployqt tool that comes with Qt: https://doc.qt.io/qt-5/macos-deployment.html#macdeploy
-# Compared to fixup_bundle, correctly finds and installs Qt-specific resources as well as non-Qt dependencies
-find_program(MACDEPLOYQT macdeployqt)
-if(NOT MACDEPLOYQT)
-	message(FATAL_ERROR "Could not find macdeployqt executable")
-endif()
-
-install( CODE "
-	message(STATUS \"Deploying and fixing up dependencies in app: ${APP}\")
-	execute_process(COMMAND \"${MACDEPLOYQT}\" \"${APP}\" -verbose=1)
-		"
-	COMPONENT Runtime
-	)
-
-else(APPLE)
-
-install( TARGETS  ${APP_NAME}  
-	RUNTIME  DESTINATION  bin )
-
-install( FILES     ${CMAKE_CURRENT_SOURCE_DIR}/auxlib.lua                DESTINATION share/fceux/luaScripts  )
-install( DIRECTORY ${CMAKE_SOURCE_DIR}/output/.                          DESTINATION share/fceux  )
-install( FILES     ${CMAKE_SOURCE_DIR}/fceux1.png                        DESTINATION share/pixmaps  )
-install( FILES     ${CMAKE_SOURCE_DIR}/fceux.desktop                     DESTINATION share/applications  )
-install( FILES     ${CMAKE_SOURCE_DIR}/documentation/fceux.6             DESTINATION share/man/man6  )
-install( FILES     ${CMAKE_SOURCE_DIR}/documentation/fceux-net-server.6  DESTINATION share/man/man6  )
-
-endif(APPLE)
+add_library(fceux_static STATIC ${SOURCES_LIB})
+target_link_libraries(fceux_static ${MINIZIP_LDFLAGS} ${ZLIB_LIBRARIES})
