@@ -5,6 +5,7 @@
 #include <utility>
 #include <variant>
 
+#include <boost/core/noncopyable.hpp>
 #include <boost/lockfree/spsc_queue.hpp>
 
 #include <SDL.h>
@@ -26,7 +27,7 @@ namespace {
 
 constexpr int MY_AUDIO_FREQ = 44100;
 
-class Sdl {
+class Sdl : private boost::noncopyable {
 private:
     SDL_Window* win_ {};
     SDL_Renderer* ren_ {};
@@ -55,7 +56,7 @@ public:
     [[nodiscard]] SDL_Renderer* ren() const { return ren_; }
 };
 
-class Texture {
+class Texture : private boost::noncopyable {
 private:
     SDL_Texture* tex_ {};
 
@@ -76,7 +77,7 @@ public:
     [[nodiscard]] SDL_Texture* get() const { return tex_; }
 };
 
-class TextureLock {
+class TextureLock : private boost::noncopyable {
 private:
     const Texture& tex_;
 
@@ -93,7 +94,7 @@ public:
 
 using AudioQueue = boost::lockfree::spsc_queue<i16, boost::lockfree::capacity<16 * (MY_AUDIO_FREQ / 60)>>;
 
-class Audio {
+class Audio : private boost::noncopyable {
 private:
     AudioQueue queue_ {};
 
