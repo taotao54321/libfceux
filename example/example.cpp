@@ -1,4 +1,5 @@
 #include <algorithm>
+#include <cassert>
 #include <cstdlib>
 #include <string_view>
 #include <utility>
@@ -83,6 +84,37 @@ public:
 
     ~TextureLock() {
         SDL_UnlockTexture(tex_.get());
+    }
+};
+
+// 60 FPS 固定。
+// 時間は 1/6000 秒単位で管理。
+class Timer {
+private:
+    static constexpr u32 FRAME_DUR = 100;
+
+    u32 nxt_; // 次フレームのタイムスタンプ
+
+public:
+    static u32 get_timestamp() {
+        return 6 * SDL_GetTicks();
+    }
+
+    Timer()
+        : nxt_(get_timestamp() + FRAME_DUR) {}
+
+    void delay() {
+        const u32 now = get_timestamp();
+        if (now < nxt_) {
+            SDL_Delay((nxt_ - now) / 6);
+            nxt_ += FRAME_DUR;
+        }
+        else {
+            // 処理が追いつかない場合、諦めて次から 60 FPS を目指す。
+            // ここを nxt_ += FRAME_DIR とすると遅れを(可能なら)挽回できるが、
+            // 挽回している間 FPS が 60 を超えてしまうのは望ましくないと考えた。
+            nxt_ = now + FRAME_DUR;
+        }
     }
 };
 
@@ -184,13 +216,12 @@ void cmd_input(const Sdl& sdl, const Texture& tex, u8 buttons) {
 
     SDL_RenderCopy(sdl.ren(), tex.get(), nullptr, nullptr);
     SDL_RenderPresent(sdl.ren());
-
-    SDL_Delay(10);
 }
 
 void mainloop(const Sdl& sdl, const Texture& tex) {
     auto snap = fceux_snapshot_create();
 
+    Timer timer;
     for (bool running = true; running;) {
         const auto cmd = event();
         std::visit(overload {
@@ -201,6 +232,8 @@ void mainloop(const Sdl& sdl, const Texture& tex) {
                        [&](CmdInput inp) { cmd_input(sdl, tex, inp.buttons); },
                    },
             cmd);
+
+        timer.delay();
     }
 
     fceux_snapshot_destroy(snap);
