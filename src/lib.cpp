@@ -1,6 +1,8 @@
+#include <algorithm>
 #include <cassert>
 #include <cstdint>
 #include <cstdio>
+#include <iterator>
 
 #include <zlib.h>
 
@@ -95,6 +97,19 @@ LIBFCEUX void fceux_hook_before_exec(FceuxHookBeforeExec hook) {
     hook_before_exec = hook;
 }
 
-LIBFCEUX void fceux_palette_get(std::uint8_t idx, std::uint8_t* r, std::uint8_t* g, std::uint8_t* b) {
+LIBFCEUX void fceux_video_get_palette(std::uint8_t idx, std::uint8_t* r, std::uint8_t* g, std::uint8_t* b) {
     FCEUD_GetPalette(idx, r, g, b);
+}
+
+LIBFCEUX int fceux_sound_set_freq(int freq) {
+    using std::begin;
+    using std::end;
+
+    constexpr int FREQS_VALID[] { 0, 44100, 48000, 96000 };
+    if(std::find(begin(FREQS_VALID), end(FREQS_VALID), freq) == end(FREQS_VALID))
+        return 0;
+
+    FCEUI_Sound(freq);
+
+    return 1;
 }

@@ -5,6 +5,8 @@
 #include <utility>
 #include <variant>
 
+#include <boost/lockfree/spsc_queue.hpp>
+
 #include <SDL.h>
 
 #include "fceux.h"
@@ -22,6 +24,8 @@ void ENSURE_IMPL(const std::string_view file, const int line, const bool cond, c
 
 namespace {
 
+constexpr int MY_AUDIO_FREQ = 44100;
+
 class Sdl {
 private:
     SDL_Window* win_ {};
@@ -29,7 +33,7 @@ private:
 
 public:
     Sdl() {
-        ENSURE(SDL_Init(SDL_INIT_VIDEO | SDL_INIT_TIMER) == 0, "SDL_Init() failed");
+        ENSURE(SDL_Init(SDL_INIT_VIDEO | SDL_INIT_AUDIO | SDL_INIT_TIMER) == 0, "SDL_Init() failed");
 
         ENSURE(win_ = SDL_CreateWindow(
                    "libfceux example",
@@ -87,6 +91,63 @@ public:
     }
 };
 
+using AudioQueue = boost::lockfree::spsc_queue<i16, boost::lockfree::capacity<16 * (MY_AUDIO_FREQ / 60)>>;
+
+class Audio {
+private:
+    AudioQueue queue_ {};
+
+    SDL_AudioDeviceID audio_;
+    SDL_AudioSpec spec_;
+
+public:
+    explicit Audio(const SDL_AudioCallback callback) {
+        SDL_AudioSpec want {};
+        want.freq = MY_AUDIO_FREQ;
+        want.format = AUDIO_S16SYS;
+        want.channels = 1;
+        want.samples = 4096;
+        want.callback = callback;
+        want.userdata = &queue_;
+
+        ENSURE((audio_ = SDL_OpenAudioDevice(nullptr, 0, &want, &spec_, 0)) > 0, "SDL_OpenAudioDevice() failed");
+
+        ENSURE(want.freq == spec_.freq && want.format == spec_.format && want.channels == spec_.channels,
+            "spec changed");
+    }
+
+    ~Audio() {
+        SDL_CloseAudioDevice(audio_);
+    }
+
+    [[nodiscard]] AudioQueue& queue() { return queue_; }
+
+    [[nodiscard]] SDL_AudioDeviceID get() const { return audio_; }
+
+    [[nodiscard]] const SDL_AudioSpec& spec() const { return spec_; }
+
+    void pause() const {
+        SDL_PauseAudioDevice(audio_, 1);
+    }
+
+    void unpause() const {
+        SDL_PauseAudioDevice(audio_, 0);
+    }
+};
+
+void audio_pull(void* const userdata, u8* const stream, const int len) {
+    auto& queue = *static_cast<AudioQueue*>(userdata);
+    const auto n_sample = len / 2;
+
+    i16* const p = reinterpret_cast<i16*>(stream);
+    const auto n_pop = queue.pop(p, n_sample);
+
+    if (n_pop < n_sample) {
+        // underflow
+        std::fill_n(p + n_pop, n_sample - n_pop, 0);
+    }
+}
+
 // 60 FPS 固定。
 // 時間は 1/6000 秒単位で管理。
 class Timer {
@@ -122,11 +183,11 @@ struct CmdQuit {};
 struct CmdSave {};
 struct CmdLoad {};
 struct CmdDump {};
-struct CmdInput {
+struct CmdEmulate {
     u8 buttons;
 };
 
-using Cmd = std::variant<CmdQuit, CmdInput, CmdSave, CmdLoad, CmdDump>;
+using Cmd = std::variant<CmdQuit, CmdEmulate, CmdSave, CmdLoad, CmdDump>;
 
 Cmd event() {
     u8 buttons = 0;
@@ -162,7 +223,7 @@ Cmd event() {
     joykey(SDL_SCANCODE_LEFT, 6);
     joykey(SDL_SCANCODE_RIGHT, 7);
 
-    return CmdInput { buttons };
+    return CmdEmulate { buttons };
 }
 
 void draw(const Texture& tex, u8* xbuf) {
@@ -170,10 +231,10 @@ void draw(const Texture& tex, u8* xbuf) {
     int pitch = -1;
     TextureLock lock(tex, nullptr, reinterpret_cast<void**>(&p), &pitch);
 
-    for (const auto y : IRANGE(240)) {
+    LOOP(240) {
         for (const auto x : IRANGE(256)) {
             u8 r, g, b;
-            fceux_palette_get(*xbuf++, &r, &g, &b);
+            fceux_video_get_palette(*xbuf++, &r, &g, &b);
             p[x] = (r << 24) | (g << 16) | (b << 8) | 0xFF;
         }
         p += pitch / sizeof(p[0]);
@@ -206,21 +267,29 @@ void cmd_dump() {
     PRINTLN("");
 }
 
-void cmd_input(const Sdl& sdl, const Texture& tex, u8 buttons) {
+void cmd_emulate(const Sdl& sdl, const Texture& tex, Audio& audio, u8 buttons) {
     u8* xbuf;
     i32* soundbuf;
     i32 soundbuf_size;
     fceux_run_frame(buttons, 0, &xbuf, &soundbuf, &soundbuf_size);
 
+    LOOP(soundbuf_size) {
+        const i16 sample = (*soundbuf++) & 0xFFFF;
+        if (!audio.queue().push(sample)) {
+            // overflow
+            break;
+        }
+    }
     draw(tex, xbuf);
 
     SDL_RenderCopy(sdl.ren(), tex.get(), nullptr, nullptr);
     SDL_RenderPresent(sdl.ren());
 }
 
-void mainloop(const Sdl& sdl, const Texture& tex) {
+void mainloop(const Sdl& sdl, const Texture& tex, Audio& audio) {
     auto snap = fceux_snapshot_create();
 
+    audio.unpause();
     Timer timer;
     for (bool running = true; running;) {
         const auto cmd = event();
@@ -229,7 +298,7 @@ void mainloop(const Sdl& sdl, const Texture& tex) {
                        [&](CmdSave) { cmd_save(snap); },
                        [&](CmdLoad) { cmd_load(snap); },
                        [&](CmdDump) { cmd_dump(); },
-                       [&](CmdInput inp) { cmd_input(sdl, tex, inp.buttons); },
+                       [&](CmdEmulate inp) { cmd_emulate(sdl, tex, audio, inp.buttons); },
                    },
             cmd);
 
@@ -265,14 +334,16 @@ int main(int argc, char** argv) {
     if (argc != 2) usage();
     const auto path_rom = argv[1];
 
-    Sdl sdl;
-    Texture tex(sdl.ren(), 256, 240);
+    const Sdl sdl;
+    const Texture tex(sdl.ren(), 256, 240);
+    Audio audio(audio_pull);
 
     ENSURE(fceux_init(path_rom) != 0, "fceux_init() failed");
+    ENSURE(fceux_sound_set_freq(MY_AUDIO_FREQ) != 0, "fceux_sound_set_freq() failed");
 
     print_instruction();
 
-    mainloop(sdl, tex);
+    mainloop(sdl, tex, audio);
 
     fceux_quit();
 

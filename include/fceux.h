@@ -40,7 +40,12 @@ typedef void (*FceuxHookBeforeExec)(uint16_t addr);
 void fceux_hook_before_exec(FceuxHookBeforeExec hook);
 
 // xbuf の Byte に対応する RGB 値を得る。
-void fceux_palette_get(uint8_t idx, uint8_t* r, uint8_t* g, uint8_t* b);
+void fceux_video_get_palette(uint8_t idx, uint8_t* r, uint8_t* g, uint8_t* b);
+
+// サンプリングレート設定。
+// 0, 44100, 48000, 96000 のみが指定できる。
+// 0 を指定するとサウンドが無効になる。
+int fceux_sound_set_freq(int freq);
 
 #ifdef __cplusplus
 }
