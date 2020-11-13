@@ -14,6 +14,7 @@ std::array<std::array<std::uint8_t, 3>, 256> palette {};
 } // anonymous namespace
 
 FceuxHookBeforeExec hook_before_exec = nullptr;
+void* hook_before_exec_userdata = nullptr;
 
 // とりあえず定数とする
 int KillFCEUXonFrame = 0;
@@ -29,7 +30,7 @@ bool turbo = false;
 
 void FCEUD_CallHookBeforeExec(std::uint16_t addr) {
     if(hook_before_exec)
-        hook_before_exec(addr);
+        hook_before_exec(hook_before_exec_userdata, addr);
 }
 
 //--------------------------------------------------------------------

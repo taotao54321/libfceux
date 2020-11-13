@@ -324,6 +324,12 @@ q               quit
 )EOS");
 }
 
+void hook(void* userdata, u16 addr) {
+    u64& op_count = *static_cast<u64*>(userdata);
+    if (++op_count % 100000 == 0)
+        EPRINTLN("op_count={}, addr=${:04X}", op_count, addr);
+}
+
 [[noreturn]] void usage() {
     EPRINTLN("Usage: example <game.nes>");
     std::exit(1);
@@ -341,6 +347,9 @@ int main(int argc, char** argv) {
 
     ENSURE(fceux_init(path_rom) != 0, "fceux_init() failed");
     ENSURE(fceux_sound_set_freq(MY_AUDIO_FREQ) != 0, "fceux_sound_set_freq() failed");
+
+    u64 op_count = 0;
+    fceux_hook_before_exec(hook, &op_count);
 
     print_instruction();
 

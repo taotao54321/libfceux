@@ -30,14 +30,14 @@ void fceux_snapshot_destroy(struct Snapshot* snap);
 int fceux_snapshot_load(struct Snapshot* snap);
 int fceux_snapshot_save(struct Snapshot* snap);
 
-typedef void (*FceuxHookBeforeExec)(uint16_t addr);
+typedef void (*FceuxHookBeforeExec)(void* userdata, uint16_t addr);
 
 // CPU 命令実行前に呼ばれる関数 hook を登録する。
 // フック関数は 1 つのみ登録可能。フック関数が既にある場合は単に置き換えられる。
 // NULL を渡すと登録解除される。
 //
 // より複雑なフック機構はこの関数を用いてクライアント側で実装可能なはず。
-void fceux_hook_before_exec(FceuxHookBeforeExec hook);
+void fceux_hook_before_exec(FceuxHookBeforeExec hook, void* userdata);
 
 // xbuf の Byte に対応する RGB 値を得る。
 void fceux_video_get_palette(uint8_t idx, uint8_t* r, uint8_t* g, uint8_t* b);

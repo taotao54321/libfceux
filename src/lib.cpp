@@ -93,8 +93,9 @@ LIBFCEUX int fceux_snapshot_save(struct Snapshot* snap) {
     return FCEUSS_SaveMS(&snap->file, Z_NO_COMPRESSION) ? 1 : 0;
 }
 
-LIBFCEUX void fceux_hook_before_exec(FceuxHookBeforeExec hook) {
+LIBFCEUX void fceux_hook_before_exec(FceuxHookBeforeExec hook, void* userdata) {
     hook_before_exec = hook;
+    hook_before_exec_userdata = userdata;
 }
 
 LIBFCEUX void fceux_video_get_palette(std::uint8_t idx, std::uint8_t* r, std::uint8_t* g, std::uint8_t* b) {
