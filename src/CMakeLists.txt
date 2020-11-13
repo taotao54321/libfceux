@@ -554,8 +554,6 @@ set_property(SOURCE ${CMAKE_CURRENT_BINARY_DIR}/fceux_git_info.cpp PROPERTY SKIP
 
 #---------------------------------------------------------------------
 
-include_directories(${CMAKE_SOURCE_DIR}/include)
-
 set(SOURCES_LIB
   ${CMAKE_CURRENT_SOURCE_DIR}/lib.cpp
   ${CMAKE_CURRENT_SOURCE_DIR}/lib-driver.cpp
@@ -564,4 +562,14 @@ set(SOURCES_LIB
 )
 
 add_library(fceux_static STATIC ${SOURCES_LIB})
+target_include_directories(fceux_static PUBLIC
+  $<BUILD_INTERFACE:${CMAKE_SOURCE_DIR}/include>
+  $<INSTALL_INTERFACE:include>
+)
+
 target_link_libraries(fceux_static ${MINIZIP_LDFLAGS} ${ZLIB_LIBRARIES})
+
+install(TARGETS fceux_static
+  ARCHIVE DESTINATION lib
+)
+install(FILES ${CMAKE_SOURCE_DIR}/include/fceux.h DESTINATION include)
