@@ -6,8 +6,9 @@
 extern "C" {
 #endif
 
+// 初期化処理。
+// 終了処理はサポートしない。終了後に再初期化したとき正しく動く確信がないので。
 int fceux_init(const char* path_rom);
-void fceux_quit(void);
 
 // joy1, joy2 は RLDUTSBA 形式。
 //

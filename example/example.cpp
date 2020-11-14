@@ -355,7 +355,5 @@ int main(int argc, char** argv) {
 
     mainloop(sdl, tex, audio);
 
-    fceux_quit();
-
     return 0;
 }

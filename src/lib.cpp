@@ -43,10 +43,6 @@ LIBFCEUX int fceux_init(const char* path_rom) {
     return 1;
 }
 
-LIBFCEUX void fceux_quit(void) {
-    FCEUI_Kill();
-}
-
 LIBFCEUX void fceux_run_frame(
     std::uint8_t joy1, std::uint8_t joy2,
     std::uint8_t** xbuf, std::int32_t** soundbuf, std::int32_t* soundbuf_size)
