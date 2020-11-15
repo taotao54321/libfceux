@@ -19,6 +19,8 @@
 
 namespace {
 
+bool initialized = false;
+
 std::uint32_t joypad_data = 0;
 
 } // anonymous namespace
@@ -40,7 +42,21 @@ LIBFCEUX int fceux_init(const char* path_rom) {
     FCEUI_SetInputFC(SIFC_NONE, nullptr, 0);
     FCEUI_SetInputFourscore(false);
 
+    initialized = true;
+
     return 1;
+}
+
+LIBFCEUX int fceux_was_init() {
+    return initialized ? 1 : 0;
+}
+
+LIBFCEUX void fceux_power() {
+    FCEUI_PowerNES();
+}
+
+LIBFCEUX void fceux_reset() {
+    ResetNES();
 }
 
 LIBFCEUX void fceux_run_frame(

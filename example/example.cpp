@@ -184,11 +184,13 @@ struct CmdQuit {};
 struct CmdSave {};
 struct CmdLoad {};
 struct CmdDump {};
+struct CmdPower {};
+struct CmdReset {};
 struct CmdEmulate {
     u8 buttons;
 };
 
-using Cmd = std::variant<CmdQuit, CmdEmulate, CmdSave, CmdLoad, CmdDump>;
+using Cmd = std::variant<CmdQuit, CmdEmulate, CmdSave, CmdLoad, CmdDump, CmdPower, CmdReset>;
 
 Cmd event() {
     u8 buttons = 0;
@@ -201,6 +203,8 @@ Cmd event() {
             case SDLK_s: return CmdSave {};
             case SDLK_l: return CmdLoad {};
             case SDLK_d: return CmdDump {};
+            case SDLK_p: return CmdPower {};
+            case SDLK_r: return CmdReset {};
             case SDLK_q: return CmdQuit {};
             default: break;
             }
@@ -268,6 +272,16 @@ void cmd_dump() {
     PRINTLN("");
 }
 
+void cmd_power() {
+    fceux_power();
+    PRINTLN("power");
+}
+
+void cmd_reset() {
+    fceux_reset();
+    PRINTLN("reset");
+}
+
 void cmd_emulate(const Sdl& sdl, const Texture& tex, Audio& audio, u8 buttons) {
     u8* xbuf;
     i32* soundbuf;
@@ -299,6 +313,8 @@ void mainloop(const Sdl& sdl, const Texture& tex, Audio& audio) {
                        [&](CmdSave) { cmd_save(snap); },
                        [&](CmdLoad) { cmd_load(snap); },
                        [&](CmdDump) { cmd_dump(); },
+                       [&](CmdPower) { cmd_power(); },
+                       [&](CmdReset) { cmd_reset(); },
                        [&](CmdEmulate inp) { cmd_emulate(sdl, tex, audio, inp.buttons); },
                    },
             cmd);
@@ -320,7 +336,9 @@ v               Select
 s               Save state
 l               Load state
 d               Dump zero page
-q               quit
+p               Power
+r               Reset
+q               Quit
 )EOS");
 }
 
@@ -345,7 +363,10 @@ int main(int argc, char** argv) {
     const Texture tex(sdl.ren(), 256, 240);
     Audio audio(audio_pull);
 
+    assert(fceux_was_init() == 0);
     ENSURE(fceux_init(path_rom) != 0, "fceux_init() failed");
+    assert(fceux_was_init() != 0);
+
     ENSURE(fceux_sound_set_freq(MY_AUDIO_FREQ) != 0, "fceux_sound_set_freq() failed");
 
     u64 op_count = 0;

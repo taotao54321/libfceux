@@ -9,6 +9,10 @@ extern "C" {
 // 初期化処理。
 // 終了処理はサポートしない。終了後に再初期化したとき正しく動く確信がないので。
 int fceux_init(const char* path_rom);
+int fceux_was_init(void);
+
+void fceux_power(void);
+void fceux_reset(void);
 
 // joy1, joy2 は RLDUTSBA 形式。
 //
@@ -26,7 +30,7 @@ void fceux_mem_write(uint16_t addr, uint8_t value, enum FceuxMemoryDomain domain
 
 struct Snapshot;
 
-struct Snapshot* fceux_snapshot_create();
+struct Snapshot* fceux_snapshot_create(void);
 void fceux_snapshot_destroy(struct Snapshot* snap);
 int fceux_snapshot_load(struct Snapshot* snap);
 int fceux_snapshot_save(struct Snapshot* snap);
