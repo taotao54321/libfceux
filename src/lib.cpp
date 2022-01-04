@@ -11,6 +11,7 @@
 #include "emufile.h"
 #include "fceu.h"
 #include "state.h"
+#include "x6502.h"
 
 #include "fceux.h"
 #include "lib-driver.hpp"
@@ -66,6 +67,10 @@ LIBFCEUX void fceux_run_frame(
     joypad_data = joy1 | (joy2<<8);
 
     FCEUI_Emulate(xbuf, soundbuf, soundbuf_size, 0);
+}
+
+LIBFCEUX std::uint8_t fceux_reg_p() {
+    return X.P;
 }
 
 LIBFCEUX std::uint8_t fceux_mem_read(std::uint16_t addr, enum FceuxMemoryDomain domain) {

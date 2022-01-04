@@ -21,6 +21,8 @@ void fceux_reset(void);
 // また、フレーム境界でないスナップショットに対して利用してはならない。
 void fceux_run_frame(uint8_t joy1, uint8_t joy2, uint8_t** xbuf, int32_t** soundbuf, int32_t* soundbuf_size);
 
+uint8_t fceux_reg_p();
+
 enum FceuxMemoryDomain {
     FCEUX_MEMORY_CPU,
 };
